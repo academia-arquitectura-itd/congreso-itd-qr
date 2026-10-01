@@ -4,10 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111827">
-  <title>Asistencia QR — Congreso Arquitectura ITD 2026</title>
+  <title>Asistencia QR — Congreso Arquitectura ITD 2026 v2.2</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"
           integrity="sha512-r6rDA7W6ZeQhvl8S7yRVQUKVHdexq+GAlNkNNqVC7YyIV+NwqCTJe2hDWCiffTyRNOeGEzRRJ9ifvRm/HCzGYg=="
-          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+          crossorigin="anonymous" referrerpolicy="no-referrer"
+          onerror="this.onerror=null;this.removeAttribute('integrity');this.removeAttribute('crossorigin');this.removeAttribute('referrerpolicy');this.src='https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js';"></script>
   <style>
     :root {
       color-scheme: light;
@@ -58,7 +59,7 @@
   <div class="top">
     <div>
       <h1>Control de asistencia QR</h1>
-      <div class="sub">Congreso de Arquitectura ITD 2026</div>
+      <div class="sub">Congreso de Arquitectura ITD 2026 · v2.2</div>
     </div>
     <button class="btn-light btn-small" id="btnConfig">Configurar</button>
   </div>
@@ -151,6 +152,8 @@
   };
 
   const KEY = 'itdQrScannerV2';
+  const RESCAN_BLOCK_MS = 8000;
+  const BACKEND_TIMEOUT_MS = 20000;
   let qr = null;
   let running = false;
   let sending = false;
@@ -256,7 +259,7 @@
     if (sending) return;
 
     const now = Date.now();
-    if (metodo === 'QR' && lastScan.folio === folio && (now - lastScan.at) < 2500) return;
+    if (metodo === 'QR' && lastScan.folio === folio && (now - lastScan.at) < RESCAN_BLOCK_MS) return;
     lastScan = {folio, at:now};
 
     sending = true;
@@ -278,10 +281,10 @@
       pendingNonce = '';
       stats.err++; renderStats();
       setReady('Listo');
-      show('error', 'Sin respuesta del backend',
-        'Revise la URL /exec, el despliegue como “Cualquiera” y la conexión a internet.');
+      show('error', 'Sin confirmación del backend',
+        'No se recibió respuesta en 20 s. Antes de reintentar el mismo folio, verifique si ya quedó registrado.');
       feedback('error');
-    }, 12000);
+    }, BACKEND_TIMEOUT_MS);
 
     els.form.submit();
   }
@@ -330,7 +333,7 @@
     if (!ensureConfig()) return;
     if (running) return;
     if (typeof Html5Qrcode === 'undefined') {
-      show('error', 'No cargó el lector QR', 'Revise la conexión a internet y recargue la página.');
+      show('error', 'No cargó el lector QR', 'No fue posible cargar el lector desde ninguno de los proveedores. Revise internet y recargue.');
       return;
     }
 
